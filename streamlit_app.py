@@ -819,6 +819,13 @@ def compute_itinerary_stats(itinerary_df: pd.DataFrame):
 # ------------------------
 # SIDEBAR: IMPOSTAZIONI
 # ------------------------
+st.sidebar.header("Menù")
+
+page = st.sidebar.radio(
+    "Sezioni",
+    ("Itinerario", "Mappa", "Info luoghi", "Info utili", "Packing list", "To-do pre-viaggio", "Spese & Budget", "Dashboard"),
+)
+
 st.sidebar.header("⚙️ Impostazioni")
 
 read_only = st.sidebar.checkbox(
@@ -848,11 +855,6 @@ if st.sidebar.button("💾 Salva nomi viaggiatori"):
     st.sidebar.success("Nomi salvati!")
 
 st.sidebar.markdown("---")
-
-page = st.sidebar.radio(
-    "Sezioni",
-    ("Itinerario", "Mappa", "Info luoghi", "Info utili", "Packing list", "To-do pre-viaggio", "Spese & Budget", "Dashboard"),
-)
 
 
 # ------------------------
