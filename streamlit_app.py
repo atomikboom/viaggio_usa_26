@@ -17,6 +17,8 @@ ICON_URLS_BY_TYPE = {
     "Viewpoint": "https://cdn-icons-png.flaticon.com/512/18183/18183776.png",
     "Altro": "https://cdn-icons-png.flaticon.com/512/18432/18432784.png",
 }
+MAX_TRAVELLERS = 4
+PACKING_CHECKBOX_COLUMNS = [f"Checked_{i+1}" for i in range(MAX_TRAVELLERS)]
 
 def initialize_database(db_path="travel_hub_usa_ovest.db"):
 
@@ -199,32 +201,32 @@ def initialize_database(db_path="travel_hub_usa_ovest.db"):
     # 3) TABELLA LOCATIONS
     # -----------------------------
     locations_rows = []
-    for name, tipo, day_note in [
-        ("Los Angeles", "Città", "Giorno 1-2"),
-        ("Santa Monica Pier", "Cityspot", "Giorno 1"),
-        ("Venice Beach", "Cityspot", "Giorno 1"),
-        ("Beverly Hills", "Cityspot", "Giorno 2"),
-        ("Hollywood Blvd", "Cityspot", "Giorno 2"),
-        ("Griffith Observatory", "Viewpoint", "Giorno 2"),
-        ("Palm Springs", "Città", "Giorno 2"),
-        ("Indio", "Città", "Giorno 2"),
-        ("Joshua Tree National Park", "Parco", "Giorno 3"),
-        ("Route 66", "Strada", "Giorno 3"),
-        ("Sedona", "Città", "Giorno 3-4"),
-        ("Grand Canyon South Rim", "Parco", "Giorno 4-5"),
-        ("Monument Valley", "Parco", "Giorno 5-6"),
-        ("Page", "Città", "Giorno 6-7"),
-        ("Antelope Canyon", "Tour", "Giorno 7"),
-        ("Lake Powell", "Lago", "Giorno 7"),
-        ("Bryce Canyon", "Parco", "Giorno 7-8"),
-        ("Zion National Park", "Parco", "Giorno 8"),
-        ("Las Vegas", "Città", "Giorno 8-9"),
-        ("Valley of Fire", "Parco", "Giorno 9"),
-        ("Death Valley National Park", "Parco", "Giorno 9-10"),
-        ("Sequoia National Park", "Parco", "Giorno 11"),
-        ("Kings Canyon", "Parco", "Giorno 11"),
-        ("Yosemite National Park", "Parco", "Giorno 11-12"),
-        ("San Francisco", "Città", "Giorno 12-15"),
+    for name, tipo, day_note, maps_url in [
+        ("Los Angeles", "Città", "Giorno 1-2", "https://www.google.com/maps/place/Los+Angeles,+CA/@34.052235,-118.243683,12z/"),
+        ("Santa Monica Pier", "Cityspot", "Giorno 1", "https://www.google.com/maps/place/Santa+Monica+Pier/@34.009919,-118.496475,17z/"),
+        ("Venice Beach", "Cityspot", "Giorno 1", "https://www.google.com/maps/place/Venice+Beach/@33.985047,-118.469483,15z/"),
+        ("Beverly Hills", "Cityspot", "Giorno 2", "https://www.google.com/maps/place/Beverly+Hills,+CA/@34.073620,-118.400356,14z/"),
+        ("Hollywood Blvd", "Cityspot", "Giorno 2", "https://www.google.com/maps/place/Hollywood+Boulevard/@34.101558,-118.326951,15z/"),
+        ("Griffith Observatory", "Viewpoint", "Giorno 2", "https://www.google.com/maps/place/Griffith+Observatory/@34.118434,-118.300393,17z/"),
+        ("Palm Springs", "Città", "Giorno 2", "https://www.google.com/maps/place/Palm+Springs,+CA/@33.830296,-116.545292,12z/"),
+        ("Indio", "Città", "Giorno 2", "https://www.google.com/maps/place/Indio,+CA/@33.720577,-116.215561,12z/"),
+        ("Joshua Tree National Park", "Parco", "Giorno 3", "https://www.google.com/maps/place/Joshua+Tree+National+Park/@33.873415,-115.901008,9z/"),
+        ("Route 66", "Strada", "Giorno 3", "https://www.google.com/maps/place/Route+66/@35.325900,-112.874200,8z/"),
+        ("Sedona", "Città", "Giorno 3-4", "https://www.google.com/maps/place/Sedona,+AZ/@34.869740,-111.760990,12z/"),
+        ("Grand Canyon South Rim", "Parco", "Giorno 4-5", "https://www.google.com/maps/place/Grand+Canyon+Village,+AZ/@36.106965,-112.112997,12z/"),
+        ("Monument Valley", "Parco", "Giorno 5-6", "https://www.google.com/maps/place/Monument+Valley/@36.998979,-110.098749,11z/"),
+        ("Page", "Città", "Giorno 6-7", "https://www.google.com/maps/place/Page,+AZ/@36.914722,-111.455833,13z/"),
+        ("Antelope Canyon", "Tour", "Giorno 7", "https://www.google.com/maps/place/Antelope+Canyon/@36.861900,-111.374300,14z/"),
+        ("Lake Powell", "Lago", "Giorno 7", "https://www.google.com/maps/place/Lake+Powell/@36.998000,-111.485000,9z/"),
+        ("Bryce Canyon", "Parco", "Giorno 7-8", "https://www.google.com/maps/place/Bryce+Canyon+National+Park/@37.593038,-112.187090,12z/"),
+        ("Zion National Park", "Parco", "Giorno 8", "https://www.google.com/maps/place/Zion+National+Park/@37.298202,-113.026300,12z/"),
+        ("Las Vegas", "Città", "Giorno 8-9", "https://www.google.com/maps/place/Las+Vegas,+NV/@36.169941,-115.139832,12z/"),
+        ("Valley of Fire", "Parco", "Giorno 9", "https://www.google.com/maps/place/Valley+of+Fire+State+Park/@36.422999,-114.514247,12z/"),
+        ("Death Valley National Park", "Parco", "Giorno 9-10", "https://www.google.com/maps/place/Death+Valley+National+Park/@36.505389,-117.079407,9z/"),
+        ("Sequoia National Park", "Parco", "Giorno 11", "https://www.google.com/maps/place/Sequoia+National+Park/@36.486367,-118.565752,10z/"),
+        ("Kings Canyon", "Parco", "Giorno 11", "https://www.google.com/maps/place/Kings+Canyon+National+Park/@36.887900,-118.555100,11z/"),
+        ("Yosemite National Park", "Parco", "Giorno 11-12", "https://www.google.com/maps/place/Yosemite+National+Park/@37.865101,-119.538330,10z/"),
+        ("San Francisco", "Città", "Giorno 12-15", "https://www.google.com/maps/place/San+Francisco,+CA/@37.774929,-122.419418,12z/"),
     ]:
         locations_rows.append(
             {
@@ -234,7 +236,7 @@ def initialize_database(db_path="travel_hub_usa_ovest.db"):
                 "Longitudine": None,
                 "Tipo": "Altro" if tipo == "Cityspot" else tipo,
                 "Note": day_note,
-                "Maps URL": "",
+                "Maps URL": maps_url,
             }
         )
 
@@ -252,13 +254,451 @@ def initialize_database(db_path="travel_hub_usa_ovest.db"):
     )
 
     # -----------------------------
-    # 4) SALVATAGGIO SU SQLITE
+    # 3b) TABELLA PACKING LIST
+    # -----------------------------
+    packing_rows = []
+
+    def add_packing_items(category, note, items):
+        for item in items:
+            packing_rows.append(
+                {
+                    "Oggetto": item,
+                    "Categoria": category,
+                    "Per chi": "Tutti",
+                    "Stato": "Da preparare",
+                    "Note": note,
+                    **{col: False for col in PACKING_CHECKBOX_COLUMNS},
+                }
+            )
+
+    add_packing_items(
+        "Documenti",
+        "Documenti personali",
+        [
+            "Passaporto valido",
+            "Carta d’identità (per sicurezza)",
+            "Patente italiana",
+            "Permesso internazionale di guida (IDP)",
+            "Fotocopie dei documenti (stampa + foto su telefono)",
+        ],
+    )
+    add_packing_items(
+        "Documenti",
+        "Viaggio & burocrazia",
+        [
+            "Biglietti aerei / app compagnia",
+            "Prenotazioni hotel/motel/appartamenti",
+            "Conferma prenotazione auto a noleggio",
+            "Numero polizza assicurazione viaggio",
+            "ESTA o visto + ricevuta",
+        ],
+    )
+    add_packing_items(
+        "Documenti",
+        "Soldi & pagamenti",
+        [
+            "Carte di credito/debito (almeno 2 circuiti)",
+            "Contanti in USD",
+            "Bancomat abilitato all’estero",
+            "Portafoglio da viaggio con RFID",
+        ],
+    )
+
+    add_packing_items(
+        "Tech",
+        "Elettronica & accessori",
+        [
+            "Smartphone + caricabatterie",
+            "Power bank capiente (20.000 mAh)",
+            "Adattatore prese USA (tipo A/B, 110V)",
+            "Cavi di ricarica extra",
+            "Supporto smartphone per auto",
+            "Cavo AUX / USB per autoradio",
+            "Auricolari / cuffie",
+            "E-book reader o tablet",
+            "Laptop + caricatore",
+            "Action cam / GoPro + accessori + SD",
+            "Macchina fotografica + obiettivi + SD",
+            "Hard disk o SSD portatile",
+            "Ciabatta/multipresa da viaggio",
+        ],
+    )
+
+    add_packing_items(
+        "Vestiti",
+        "Parte superiore",
+        [
+            "T-shirt leggere (cotone o tecnico)",
+            "Maglie tecniche a maniche lunghe",
+            "Felpa o pile leggero",
+            "Giacca/piumino leggero o softshell",
+            "Giacca antivento/antipioggia",
+        ],
+    )
+    add_packing_items(
+        "Vestiti",
+        "Parte inferiore",
+        [
+            "Pantaloni lunghi leggeri/tecnici",
+            "Pantaloncini / shorts",
+            "Leggings o strati termici",
+        ],
+    )
+    add_packing_items(
+        "Vestiti",
+        "Intimo & notte",
+        [
+            "Intimo sufficiente o per lavatrici",
+            "Calze tecniche per trekking",
+            "Pigiama / abbigliamento notte",
+        ],
+    )
+    add_packing_items(
+        "Vestiti",
+        "Scarpe",
+        [
+            "Scarponcini trekking o trail",
+            "Sneakers comode per città",
+            "Sandali / ciabatte",
+        ],
+    )
+    add_packing_items(
+        "Vestiti",
+        "Accessori",
+        [
+            "Cappello con visiera",
+            "Bandana / buff",
+            "Occhiali da sole polarizzati",
+            "Cintura",
+            "Costume da bagno",
+            "Outfit carino per la sera",
+        ],
+    )
+
+    add_packing_items(
+        "Igiene",
+        "Igiene personale & bagno",
+        [
+            "Spazzolino + dentifricio",
+            "Filo interdentale",
+            "Deodorante",
+            "Shampoo + bagnoschiuma",
+            "Rasoio / lamette / schiuma",
+            "Spazzola / pettine / elastici",
+            "Crema idratante viso/corpo",
+            "Burrocacao",
+            "Salviette umidificate",
+            "Salviettine disinfettanti mani",
+            "Fazzoletti di carta",
+            "Forbicine / pinzetta (solo bagaglio stiva)",
+            "Prodotti per ciclo (se necessario)",
+        ],
+    )
+
+    add_packing_items(
+        "Medicine",
+        "Salute & farmacia",
+        [
+            "Farmaci personali + prescrizioni",
+            "Antidolorifici / antipiretici",
+            "Antinfiammatori",
+            "Cerotti normali + anti-vesciche",
+            "Disinfettante gel/spray",
+            "Garze sterili + benda elastica",
+            "Antidiarroico + fermenti lattici",
+            "Antistaminico",
+            "Spray/crema punture insetti",
+            "Collirio idratante",
+            "Crema solare SPF 30/50",
+            "Gel aloe vera / doposole",
+            "Farmaci per mal d’auto / aereo",
+        ],
+    )
+
+    add_packing_items(
+        "Altro",
+        "Road trip: documenti & auto",
+        [
+            "Patente + IDP + carta credito per noleggio",
+            "Contratto noleggio + assicurazione",
+            "Numeri utili: assistenza, noleggio, assicurazione",
+            "Numeri del gruppo su carta",
+        ],
+    )
+    add_packing_items(
+        "Altro",
+        "Road trip: accessori auto",
+        [
+            "Occhiali da sole a portata",
+            "Caricabatterie auto USB",
+            "Cavo lungo per sedile posteriore",
+            "Sacchetti immondizia per auto",
+            "Salviette / carta assorbente",
+            "Mappa cartacea della zona",
+        ],
+    )
+    add_packing_items(
+        "Altro",
+        "Road trip: comfort",
+        [
+            "Cuscino da viaggio per il collo",
+            "Mascherina per dormire",
+            "Tappi per orecchie",
+            "Copertina leggera / felpa extra in auto",
+        ],
+    )
+
+    add_packing_items(
+        "Altro",
+        "Trekking & outdoor",
+        [
+            "Zainetto giornaliero 20-30L",
+            "Borraccia grande (1–2L) o camelbak",
+            "Bastoncini da trekking",
+            "Snack energetici (barrette, frutta secca)",
+            "Sacchetti ziplock per rifiuti/snack",
+            "Torcia frontale o torcia piccola",
+            "Coltellino multiuso (solo stiva)",
+            "Sacchetti impermeabili / dry bag",
+            "Coprizaino antipioggia",
+            "Mini telo / asciugamano microfibra",
+        ],
+    )
+
+    add_packing_items(
+        "Altro",
+        "Mare, lago & piscina",
+        [
+            "Costume/i extra",
+            "Asciugamano microfibra",
+            "Infradito / sandali",
+            "Borsetta mare",
+            "Custodia impermeabile smartphone",
+            "Occhialini da nuoto",
+            "Pareo o maglia UV",
+        ],
+    )
+
+    add_packing_items(
+        "Altro",
+        "Cibo & bevande",
+        [
+            "Borracce riutilizzabili",
+            "Snack dall’Italia",
+            "Gomme da masticare / mentine",
+            "Bustine sali minerali / elettroliti",
+            "Caffè solubile o snack di casa",
+        ],
+    )
+
+    add_packing_items(
+        "Altro",
+        "Organizzazione valigia",
+        [
+            "Cubi / organizer per valigia",
+            "Sacchetti biancheria sporca",
+            "Lucchetto per bagagli",
+            "Bilancia pesa-valigia",
+            "Borsa pieghevole per shopping",
+        ],
+    )
+
+    add_packing_items(
+        "Altro",
+        "Varie utili",
+        [
+            "Penna + blocco appunti",
+            "Copia cartacea itinerario e indirizzi hotel",
+            "Riepilogo prenotazioni stampato",
+            "Kit da cucito (ago, filo, bottone)",
+            "Nastro adesivo / duct tape",
+            "Elastici, fascette, moschettoni",
+            "Occhiali da vista di scorta",
+            "Lenti a contatto + liquido + portalenti",
+        ],
+    )
+
+    add_packing_items(
+        "Altro",
+        "App & digitale",
+        [
+            "Google Maps con mappe offline",
+            "App Booking / Airbnb / compagnie",
+            "App noleggio auto",
+            "Revolut / Wise / altre app pagamento",
+            "App meteo aggiornata",
+            "Google Translate o app traduzione",
+            "Cartella condivisa con documenti",
+            "Lista numeri emergenza digitale",
+        ],
+    )
+
+    packing_df = pd.DataFrame(
+        packing_rows,
+        columns=[
+            "Oggetto",
+            "Categoria",
+            "Per chi",
+            "Stato",
+            "Note",
+            *PACKING_CHECKBOX_COLUMNS,
+        ],
+    )
+
+    # -----------------------------
+    # 4) SALVATAGGIO SU SQLITE (MERGE INTELLIGENTE)
     # -----------------------------
     conn = sqlite3.connect(db_path)
 
+    # ITINERARY: merge su "Giorno" o "Data"
+    try:
+        existing_itinerary = pd.read_sql("SELECT * FROM itinerary", conn)
+        if not existing_itinerary.empty:
+            # Merge: preserva dati esistenti, aggiorna solo se mancanti
+            merged_itinerary = itinerary_df.copy()
+            for idx, row in existing_itinerary.iterrows():
+                giorno = row.get("Giorno")
+                data = row.get("Data")
+                # Cerca match per Giorno o Data
+                mask = (merged_itinerary["Giorno"] == giorno) | (merged_itinerary["Data"] == data)
+                if mask.any():
+                    # Aggiorna solo campi vuoti/None nel nuovo con valori esistenti
+                    existing_idx = mask.idxmax()
+                    for col in merged_itinerary.columns:
+                        if pd.isna(merged_itinerary.at[existing_idx, col]) and pd.notna(row.get(col)):
+                            merged_itinerary.at[existing_idx, col] = row[col]
+                else:
+                    # Aggiungi riga esistente che non è nel nuovo
+                    merged_itinerary = pd.concat([merged_itinerary, row.to_frame().T], ignore_index=True)
+            itinerary_df = merged_itinerary
+    except Exception:
+        pass  # Tabella non esiste ancora, usa i dati di default
+
+    # BOOKINGS: merge su "Nome" + "Check_in"
+    try:
+        existing_bookings = pd.read_sql("SELECT * FROM bookings", conn)
+        if not existing_bookings.empty:
+            merged_bookings = bookings_df.copy()
+            for idx, row in existing_bookings.iterrows():
+                nome = row.get("Nome")
+                check_in = row.get("Check_in")
+                mask = (merged_bookings["Nome"] == nome) & (merged_bookings["Check_in"] == check_in)
+                if mask.any():
+                    existing_idx = mask.idxmax()
+                    for col in merged_bookings.columns:
+                        if pd.isna(merged_bookings.at[existing_idx, col]) and pd.notna(row.get(col)):
+                            merged_bookings.at[existing_idx, col] = row[col]
+                else:
+                    merged_bookings = pd.concat([merged_bookings, row.to_frame().T], ignore_index=True)
+            bookings_df = merged_bookings
+    except Exception:
+        pass
+
+    # LOCATIONS: merge su "Nome luogo" - PRESERVA COORDINATE!
+    try:
+        existing_locations = pd.read_sql("SELECT * FROM locations", conn)
+        if not existing_locations.empty:
+            # Allinea colonne: assicurati che entrambi i DataFrame abbiano le stesse colonne
+            locations_columns = [
+                "Nome luogo",
+                "Data",
+                "Latitudine",
+                "Longitudine",
+                "Tipo",
+                "Note",
+                "Maps URL",
+            ]
+            existing_locations = ensure_columns(existing_locations, locations_columns)
+            locations_df = ensure_columns(locations_df, locations_columns)
+            
+            # Partiamo dai dati esistenti e aggiorniamo solo dove mancano
+            merged_locations = existing_locations.copy()
+            # Per ogni location nel nuovo dataset
+            for idx, new_row in locations_df.iterrows():
+                nome_luogo = new_row.get("Nome luogo")
+                if pd.isna(nome_luogo) or nome_luogo == "":
+                    continue
+                # Cerca se esiste già
+                mask = merged_locations["Nome luogo"] == nome_luogo
+                if mask.any():
+                    # Esiste già: preserva coordinate e altri dati esistenti, aggiorna solo Maps URL se mancante
+                    existing_idx = mask.idxmax()
+                    # IMPORTANTE: preserva SEMPRE coordinate esistenti (non sovrascrivere!)
+                    # Aggiorna Maps URL solo se mancante nell'esistente
+                    if (pd.isna(merged_locations.at[existing_idx, "Maps URL"]) or 
+                        str(merged_locations.at[existing_idx, "Maps URL"]).strip() == ""):
+                        if pd.notna(new_row.get("Maps URL")) and str(new_row["Maps URL"]).strip() != "":
+                            merged_locations.at[existing_idx, "Maps URL"] = new_row["Maps URL"]
+                    # Aggiorna Tipo solo se mancante
+                    if pd.isna(merged_locations.at[existing_idx, "Tipo"]) or str(merged_locations.at[existing_idx, "Tipo"]).strip() == "":
+                        if pd.notna(new_row.get("Tipo")) and str(new_row["Tipo"]).strip() != "":
+                            merged_locations.at[existing_idx, "Tipo"] = new_row["Tipo"]
+                    # Aggiorna Note solo se mancante
+                    if pd.isna(merged_locations.at[existing_idx, "Note"]) or str(merged_locations.at[existing_idx, "Note"]).strip() == "":
+                        if pd.notna(new_row.get("Note")) and str(new_row["Note"]).strip() != "":
+                            merged_locations.at[existing_idx, "Note"] = new_row["Note"]
+                    # Data: preserva esistente, aggiorna solo se mancante
+                    if pd.isna(merged_locations.at[existing_idx, "Data"]):
+                        if pd.notna(new_row.get("Data")):
+                            merged_locations.at[existing_idx, "Data"] = new_row["Data"]
+                else:
+                    # Nuova location: aggiungila
+                    merged_locations = pd.concat([merged_locations, new_row.to_frame().T], ignore_index=True)
+            locations_df = merged_locations
+    except Exception:
+        pass
+
+    # PACKING: merge su "Oggetto" + "Categoria" - PRESERVA STATO E CHECKBOX!
+    try:
+        existing_packing = pd.read_sql("SELECT * FROM packing", conn)
+        if not existing_packing.empty:
+            # Allinea colonne: assicurati che entrambi i DataFrame abbiano le stesse colonne
+            packing_columns = [
+                "Oggetto",
+                "Categoria",
+                "Per chi",
+                "Stato",
+                "Note",
+                *PACKING_CHECKBOX_COLUMNS,
+            ]
+            existing_packing = ensure_columns(existing_packing, packing_columns)
+            packing_df = ensure_columns(packing_df, packing_columns)
+            
+            # Partiamo dai dati esistenti e aggiorniamo solo dove mancano
+            merged_packing = existing_packing.copy()
+            # Per ogni oggetto nel nuovo dataset
+            for idx, new_row in packing_df.iterrows():
+                oggetto = new_row.get("Oggetto")
+                categoria = new_row.get("Categoria")
+                if pd.isna(oggetto) or oggetto == "":
+                    continue
+                # Cerca se esiste già
+                mask = (merged_packing["Oggetto"] == oggetto) & (merged_packing["Categoria"] == categoria)
+                if mask.any():
+                    # Esiste già: preserva tutti i dati esistenti (stato, checkbox, note)
+                    existing_idx = mask.idxmax()
+                    # Aggiorna solo campi vuoti con i nuovi valori
+                    for col in packing_columns:
+                        if col in ["Stato", "Per chi", "Note"]:
+                            # Per questi campi, aggiorna solo se mancante
+                            if pd.isna(merged_packing.at[existing_idx, col]) or str(merged_packing.at[existing_idx, col]).strip() == "":
+                                if pd.notna(new_row.get(col)) and str(new_row[col]).strip() != "":
+                                    merged_packing.at[existing_idx, col] = new_row[col]
+                        elif col in PACKING_CHECKBOX_COLUMNS:
+                            # Per i checkbox, preserva sempre il valore esistente (non sovrascrivere!)
+                            pass  # Mantieni il valore esistente
+                else:
+                    # Nuovo oggetto: aggiungilo
+                    merged_packing = pd.concat([merged_packing, new_row.to_frame().T], ignore_index=True)
+            packing_df = merged_packing
+    except Exception:
+        pass
+
+    # Salva tutto (ora con merge completato)
     itinerary_df.to_sql("itinerary", conn, if_exists="replace", index=False)
     bookings_df.to_sql("bookings", conn, if_exists="replace", index=False)
     locations_df.to_sql("locations", conn, if_exists="replace", index=False)
+    packing_df.to_sql("packing", conn, if_exists="replace", index=False)
 
     conn.close()
 
@@ -384,6 +824,65 @@ def extract_lat_lon_from_maps_url(url: str):
         pass
 
     return None, None
+
+def get_reminders(todo_df: pd.DataFrame, expenses_df: pd.DataFrame, days_ahead=7):
+    """
+    Restituisce una lista di reminder gratuiti (notifiche in-app) per:
+    - To-do in scadenza
+    - Spese da registrare
+    Nessuna API esterna richiesta, tutto gratuito!
+    """
+    reminders = []
+    today = date.today()
+    
+    # Reminder per To-do in scadenza
+    if todo_df is not None and not todo_df.empty and "Scadenza" in todo_df.columns:
+        todo_df_copy = todo_df.copy()
+        todo_df_copy["Scadenza"] = pd.to_datetime(todo_df_copy["Scadenza"], errors="coerce")
+        todo_df_copy = todo_df_copy[todo_df_copy["Scadenza"].notna()]
+        
+        # To-do non completati con scadenza nei prossimi N giorni
+        upcoming = todo_df_copy[
+            (todo_df_copy["Scadenza"].dt.date >= today) &
+            (todo_df_copy["Scadenza"].dt.date <= (today + pd.Timedelta(days=days_ahead))) &
+            (todo_df_copy.get("Stato", "").astype(str).str.lower().isin(["da fare", "in corso", ""]))
+        ]
+        
+        for idx, row in upcoming.iterrows():
+            scadenza = row["Scadenza"].date()
+            giorni_rimasti = (scadenza - today).days
+            task = row.get("Task", "Task senza nome")
+            assegnato = row.get("Assegnato a", "Nessuno")
+            
+            if giorni_rimasti == 0:
+                reminders.append({
+                    "type": "urgent",
+                    "icon": "🔴",
+                    "title": f"SCADENZA OGGI: {task}",
+                    "message": f"Assigned to: {assegnato}",
+                    "action": "Vai a To-do pre-viaggio"
+                })
+            elif giorni_rimasti <= 2:
+                reminders.append({
+                    "type": "warning",
+                    "icon": "⚠️",
+                    "title": f"Scade tra {giorni_rimasti} giorni: {task}",
+                    "message": f"Scadenza: {scadenza.strftime('%d/%m/%Y')} - Assigned to: {assegnato}",
+                    "action": "Vai a To-do pre-viaggio"
+                })
+            else:
+                reminders.append({
+                    "type": "info",
+                    "icon": "📅",
+                    "title": f"Scade tra {giorni_rimasti} giorni: {task}",
+                    "message": f"Scadenza: {scadenza.strftime('%d/%m/%Y')} - Assigned to: {assegnato}",
+                    "action": "Vai a To-do pre-viaggio"
+                })
+    
+    # Reminder per packing list (oggetti da preparare)
+    # Questo lo aggiungiamo se necessario
+    
+    return reminders
 
 def render_countdown():
     """Mostra un countdown alla partenza e lo stato del viaggio."""
@@ -583,9 +1082,9 @@ def save_travellers_to_db(travellers_list):
 # ------------------------
 # INIZIALIZZAZIONE STATO
 # ------------------------
-def init_state():
+def init_state(force_reload=False):
     # Viaggiatori
-    if "travellers" not in st.session_state:
+    if force_reload or "travellers" not in st.session_state:
         st.session_state.travellers = load_travellers_from_db()
 
     # Itinerary
@@ -598,14 +1097,14 @@ def init_state():
         "Pernottamento",
         "Attività principali / note",
     ]
-    if "itinerary" not in st.session_state:
+    if force_reload or "itinerary" not in st.session_state:
         df_it = load_table("itinerary", itinerary_columns)
         df_it = ensure_columns(df_it, itinerary_columns)
         st.session_state.itinerary = drop_empty_rows(df_it)
 
     # Schedule (ora per ora) - opzionale
     schedule_columns = ["Data", "Ora", "Descrizione"]
-    if "schedule" not in st.session_state:
+    if force_reload or "schedule" not in st.session_state:
         df_sc = load_table("schedule", schedule_columns)
         df_sc = ensure_columns(df_sc, schedule_columns)
         st.session_state.schedule = drop_empty_rows(df_sc)
@@ -622,7 +1121,7 @@ def init_state():
         "Tasso -> EUR",
         "Importo in EUR",
     ]
-    if "expenses" not in st.session_state:
+    if force_reload or "expenses" not in st.session_state:
         df_ex = load_table("expenses", expenses_columns)
         df_ex = ensure_columns(df_ex, expenses_columns)
         st.session_state.expenses = drop_empty_rows(df_ex)
@@ -637,7 +1136,7 @@ def init_state():
         "Note",
         "Maps URL",
     ]
-    if "locations" not in st.session_state:
+    if force_reload or "locations" not in st.session_state:
         df_loc = load_table("locations", locations_columns)
         df_loc = ensure_columns(df_loc, locations_columns)
         st.session_state.locations = drop_empty_rows(df_loc)
@@ -651,7 +1150,7 @@ def init_state():
         "Note utili",
         "Link utili",
     ]
-    if "places_info" not in st.session_state:
+    if force_reload or "places_info" not in st.session_state:
         df_pi = load_table("places_info", places_info_columns)
         st.session_state.places_info = drop_empty_rows(df_pi)
     
@@ -663,7 +1162,7 @@ def init_state():
         "Stato",  # Da fare / In corso / Fatto
         "Note",
     ]
-    if "todo" not in st.session_state:
+    if force_reload or "todo" not in st.session_state:
         df_td = load_table("todo", todo_columns)
         df_td = ensure_columns(df_td, todo_columns)
         st.session_state.todo = drop_empty_rows(df_td)
@@ -675,10 +1174,13 @@ def init_state():
         "Per chi",    # Daniele & Alessandra, Andrea & Paola, Tutti
         "Stato",      # Da comprare, Da preparare, In valigia, Già sul posto
         "Note",
+        *PACKING_CHECKBOX_COLUMNS,
     ]
-    if "packing" not in st.session_state:
+    if force_reload or "packing" not in st.session_state:
         df_pack = load_table("packing", packing_columns)
         df_pack = ensure_columns(df_pack, packing_columns)
+        for col in PACKING_CHECKBOX_COLUMNS:
+            df_pack[col] = df_pack[col].fillna(False).astype(bool)
         st.session_state.packing = drop_empty_rows(df_pack)
 
 
@@ -948,7 +1450,8 @@ read_only = st.sidebar.checkbox(
 st.sidebar.title("⚙️ Amministrazione database")
 
 if st.sidebar.button("Inizializza viaggio (popola DB)"):
-    initialize_database()
+    initialize_database(DB_PATH)
+    init_state(force_reload=True)
     st.success("Database inizializzato con successo! 🎉")
 
 
@@ -993,6 +1496,20 @@ if page == "Home":
         else pd.DataFrame(columns=todo_df.columns)
     )
     open_tasks_count = len(open_tasks_df)
+
+    # Reminder gratuiti (notifiche in-app)
+    reminders = get_reminders(todo_df, expenses_df, days_ahead=7)
+    if reminders:
+        st.markdown("---")
+        st.subheader("🔔 Reminder e notifiche")
+        for rem in reminders:
+            if rem["type"] == "urgent":
+                st.error(f"{rem['icon']} **{rem['title']}**\n\n{rem['message']}")
+            elif rem["type"] == "warning":
+                st.warning(f"{rem['icon']} **{rem['title']}**\n\n{rem['message']}")
+            else:
+                st.info(f"{rem['icon']} **{rem['title']}**\n\n{rem['message']}")
+        st.divider()
 
     col_home1, col_home2, col_home3 = st.columns(3)
     with col_home1:
@@ -1324,6 +1841,48 @@ elif page == "Mappa":
 
             map_df["color"] = map_df["Tipo"].apply(tipo_to_color)
 
+            # Filtri per tipo di luogo
+            st.markdown("#### Filtri mappa")
+            col_filter1, col_filter2 = st.columns(2)
+            with col_filter1:
+                filter_types = st.multiselect(
+                    "Filtra per tipo",
+                    options=["Hotel", "Parco", "Città", "Viewpoint", "Altro"],
+                    default=["Hotel", "Parco", "Città", "Viewpoint", "Altro"],
+                    key="map_type_filter",
+                )
+            with col_filter2:
+                show_current_only = st.checkbox(
+                    "Mostra solo tappa corrente (oggi)",
+                    value=False,
+                    key="map_current_filter",
+                )
+            
+            # Applica filtri
+            if filter_types:
+                map_df = map_df[map_df["Tipo"].isin(filter_types)]
+            
+            # Filtro tappa corrente (se richiesto)
+            if show_current_only:
+                today = date.today()
+                if "Data" in map_df.columns:
+                    # Converti Data in date per il confronto
+                    map_df["Data_parsed"] = pd.to_datetime(map_df["Data"], errors="coerce").dt.date
+                    map_df = map_df[map_df["Data_parsed"] == today]
+                    map_df = map_df.drop(columns=["Data_parsed"])
+            
+            if map_df.empty:
+                st.info("Nessun punto corrisponde ai filtri selezionati.")
+                st.stop()
+
+            # Evidenzia tappa corrente (oggi)
+            today = date.today()
+            today_str = today.strftime("%Y-%m-%d")
+            if "Data" in map_df.columns:
+                map_df["is_current"] = map_df["Data"].astype(str) == today_str
+            else:
+                map_df["is_current"] = False
+            
             # Ordiniamo i punti in base a Data (se presente) per costruire il "percorso"
             ordered = map_df.copy()
             if "Data" in ordered.columns:
@@ -1333,6 +1892,8 @@ elif page == "Mappa":
             # Costruiamo i segmenti usando Mapbox Directions (se possibile)
             segments = []
             route_paths = []  # per PathLayer
+            total_distance = 0.0
+            total_time = 0.0
 
             for i in range(len(ordered) - 1):
                 r_from = ordered.iloc[i]
@@ -1353,6 +1914,9 @@ elif page == "Mappa":
                     time_h = dist_km / speed_kmh
                     coords = [[lon1, lat1], [lon2, lat2]]  # linea dritta
 
+                total_distance += dist_km
+                total_time += time_h
+
                 route_paths.append(
                     {
                         "path": coords,
@@ -1370,6 +1934,17 @@ elif page == "Mappa":
                 )
 
             segments_df = pd.DataFrame(segments)
+            
+            # Statistiche totali
+            if len(segments) > 0:
+                st.markdown("#### 📊 Statistiche viaggio")
+                col_stat1, col_stat2, col_stat3 = st.columns(3)
+                with col_stat1:
+                    st.metric("Distanza totale", f"{round(total_distance, 1)} km")
+                with col_stat2:
+                    st.metric("Tempo totale stimato", f"{round(total_time, 1)} ore")
+                with col_stat3:
+                    st.metric("Numero tappe", len(map_df))
 
             # Stato iniziale della vista: centro sui punti
             view_state = pdk.ViewState(
@@ -1383,22 +1958,31 @@ elif page == "Mappa":
             def build_icon_data(row):
                 tipo = str(row.get("Tipo", "Altro")).strip()
                 icon_url = ICON_URLS_BY_TYPE.get(tipo, ICON_URLS_BY_TYPE["Altro"])
+                # Evidenzia tappa corrente con pin più grande
+                is_current = row.get("is_current", False)
+                size_multiplier = 1.5 if is_current else 1.0
                 return {
                     "url": icon_url,  # URL dell'immagine del pin
-                    "width": 128,
-                    "height": 128,
-                    "anchorY": 128,  # punta in basso
+                    "width": int(128 * size_multiplier),
+                    "height": int(128 * size_multiplier),
+                    "anchorY": int(128 * size_multiplier),  # punta in basso
                 }
 
             map_df["icon_data"] = map_df.apply(build_icon_data, axis=1)
 
             # Layer dei segnalini (IconLayer)
+            # Evidenzia tappa corrente con dimensione maggiore
+            def get_size(row):
+                return 6 if row.get("is_current", False) else 4
+            
+            map_df["icon_size"] = map_df.apply(get_size, axis=1)
+            
             icon_layer = pdk.Layer(
                 "IconLayer",
                 data=map_df,
                 get_icon="icon_data",
                 get_position="[Longitudine, Latitudine]",
-                get_size=4,      # grandezza base del pin
+                get_size="icon_size",
                 size_scale=10,   # scala globale (puoi giocare con 8–12)
                 pickable=True,
             )
@@ -1412,9 +1996,35 @@ elif page == "Mappa":
                 get_color=[255, 140, 0],
             )
 
+            # Prepara tooltip ricchi con link Maps URL
+            def build_tooltip_html(row):
+                nome = str(row.get("Nome luogo", "—"))
+                tipo = str(row.get("Tipo", "—"))
+                data = str(row.get("Data", "—")) if pd.notna(row.get("Data")) else "—"
+                note = str(row.get("Note", "—")) if pd.notna(row.get("Note")) else "—"
+                maps_url = str(row.get("Maps URL", "")) if pd.notna(row.get("Maps URL")) else ""
+                is_current = row.get("is_current", False)
+                
+                html = f"<div style='padding: 8px;'>"
+                if is_current:
+                    html += f"<b style='color: #ff4444; font-size: 14px;'>📍 {nome} (OGGI)</b><br/>"
+                else:
+                    html += f"<b style='font-size: 14px;'>{nome}</b><br/>"
+                html += f"<span style='color: #666;'>Tipo:</span> {tipo}<br/>"
+                if data != "—":
+                    html += f"<span style='color: #666;'>Data:</span> {data}<br/>"
+                if note != "—" and note.strip():
+                    html += f"<span style='color: #666;'>Note:</span> {note[:50]}{'...' if len(note) > 50 else ''}<br/>"
+                if maps_url and maps_url.strip():
+                    html += f"<a href='{maps_url}' target='_blank' style='color: #0066cc; text-decoration: none;'>🗺️ Apri in Google Maps</a>"
+                html += "</div>"
+                return html
+            
+            # pydeck richiede una colonna con HTML per il tooltip personalizzato
+            # Usiamo un approccio più semplice: tooltip base con info essenziali
             tooltip = {
                 "html": "<b>{Nome luogo}</b><br/>Tipo: {Tipo}<br/>Data: {Data}<br/>{Note}",
-                "style": {"backgroundColor": "white", "color": "black"},
+                "style": {"backgroundColor": "white", "color": "black", "fontSize": "12px"},
             }
 
             if MAPBOX_API_KEY:
@@ -1442,6 +2052,31 @@ elif page == "Mappa":
                 deck,
                 use_container_width=True,
             )
+            
+            # Mostra link Maps URL in modo più visibile
+            st.markdown("---")
+            st.subheader("🔗 Link rapidi Google Maps")
+            maps_links_df = map_df[["Nome luogo", "Maps URL", "Tipo", "Data"]].copy()
+            maps_links_df = maps_links_df[maps_links_df["Maps URL"].notna()]
+            maps_links_df = maps_links_df[maps_links_df["Maps URL"].astype(str).str.strip() != ""]
+            
+            if not maps_links_df.empty:
+                for idx, row in maps_links_df.iterrows():
+                    nome = row["Nome luogo"]
+                    url = row["Maps URL"]
+                    tipo = row.get("Tipo", "—")
+                    data = row.get("Data", "—")
+                    is_current = row.get("is_current", False)
+                    
+                    col_link1, col_link2 = st.columns([3, 1])
+                    with col_link1:
+                        current_badge = " 🔴 **OGGI**" if is_current else ""
+                        st.markdown(f"**{nome}** ({tipo}){current_badge}")
+                    with col_link2:
+                        st.markdown(f"[🗺️ Apri Maps]({url})")
+                st.caption("Clicca sui link per aprire la posizione in Google Maps.")
+            else:
+                st.info("Aggiungi Maps URL ai luoghi per vedere i link rapidi qui.")
             
             # Collegamento Mappa -> Info Luoghi
             st.markdown("---")
@@ -1693,6 +2328,18 @@ elif page == "Packing list":
         st.info("Modalità sola lettura attiva.")
         st.dataframe(pack_df, use_container_width=True)
     else:
+        traveller_names = st.session_state.travellers[:MAX_TRAVELLERS]
+        checkbox_columns_config = {}
+        for idx, traveller in enumerate(traveller_names):
+            col_name = PACKING_CHECKBOX_COLUMNS[idx]
+            checkbox_columns_config[col_name] = st.column_config.CheckboxColumn(
+                f"{traveller} ha preso?",
+                help=f"Segna se {traveller} ha già questo oggetto in valigia.",
+                default=False,
+            )
+
+        per_chi_options = ["Tutti"] + traveller_names
+
         edited_pack = st.data_editor(
             pack_df,
             num_rows="dynamic",
@@ -1706,22 +2353,24 @@ elif page == "Packing list":
                 ),
                 "Per chi": st.column_config.SelectboxColumn(
                     "Per chi",
-                    options=[
-                        "Tutti",
-                        "Daniele & Alessandra",
-                        "Andrea & Paola",
-                    ],
+                    options=per_chi_options,
                 ),
                 "Stato": st.column_config.SelectboxColumn(
                     "Stato",
                     options=["Da comprare", "Da preparare", "In valigia", "Già sul posto"],
                 ),
                 "Note": st.column_config.TextColumn("Note"),
+                **checkbox_columns_config,
             },
         )
 
         if st.button("💾 Salva packing list"):
+            for col in PACKING_CHECKBOX_COLUMNS:
+                if col not in edited_pack.columns:
+                    edited_pack[col] = False
+            edited_pack[PACKING_CHECKBOX_COLUMNS] = edited_pack[PACKING_CHECKBOX_COLUMNS].fillna(False).astype(bool)
             cleaned = drop_empty_rows(edited_pack)
+            cleaned = cleaned[cleaned["Oggetto"].notna()]
             st.session_state.packing = cleaned
             save_table(cleaned, "packing")
             st.success("Packing list salvata!")
