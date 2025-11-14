@@ -816,14 +816,125 @@ def compute_itinerary_stats(itinerary_df: pd.DataFrame):
     return total_km, avg_km, hotel_changes, type_counts
 
 
+def format_euro(amount: float, default="€ 0") -> str:
+    """Formatta un importo in EUR in modo compatto."""
+    try:
+        if amount is None or pd.isna(amount):
+            return default
+        formatted = f"{amount:,.2f}"
+        formatted = formatted.replace(",", "X").replace(".", ",").replace("X", ".")
+        return f"€ {formatted}"
+    except Exception:
+        return default
+
+
+def format_km(value, default="—"):
+    try:
+        if value is None or pd.isna(value):
+            return default
+        return f"{int(round(value)):,} km".replace(",", ".")
+    except Exception:
+        return default
+
+
+def get_next_itinerary_entry(itinerary_df: pd.DataFrame):
+    """Restituisce la prossima tappa futura (o l'ultima disponibile) con i dettagli principali."""
+    if itinerary_df is None or itinerary_df.empty:
+        return None
+
+    df = itinerary_df.copy()
+    df["__date"] = pd.to_datetime(df.get("Data"), errors="coerce")
+    df = df[df["__date"].notna()]
+    if df.empty:
+        return None
+
+    today_ts = pd.Timestamp(date.today())
+    upcoming = df[df["__date"] >= today_ts].sort_values("__date", kind="mergesort")
+    if upcoming.empty:
+        upcoming = df.sort_values("__date", kind="mergesort")
+
+    row = upcoming.iloc[0]
+    distance = pd.to_numeric(row.get("Distanza prevista (km)"), errors="coerce")
+
+    return {
+        "giorno": row.get("Giorno"),
+        "data": row["__date"].date(),
+        "data_label": row["__date"].strftime("%d/%m/%Y"),
+        "tipo": row.get("Tipo giorno") or row.get("Tipo"),
+        "tappa": row.get("Tappa principale") or row.get("Tappa"),
+        "pernottamento": row.get("Pernottamento"),
+        "note": row.get("Attività principali / note") or row.get("Note"),
+        "distanza_label": f"{int(distance):,} km".replace(",", ".") if pd.notna(distance) else None,
+    }
+
+
+def get_top_todo_items(todo_df: pd.DataFrame, limit: int = 3):
+    """Restituisce i prossimi task (Da fare / In corso) ordinati per scadenza."""
+    if todo_df is None or todo_df.empty or "Stato" not in todo_df.columns:
+        return []
+
+    df = todo_df.copy()
+    df["__deadline"] = pd.to_datetime(df.get("Scadenza"), errors="coerce")
+    mask = df["Stato"].astype(str).isin(["Da fare", "In corso"])
+    df = df[mask]
+    if df.empty:
+        return []
+
+    df = df.sort_values(["__deadline", "Task"], ascending=[True, True], kind="mergesort").head(limit)
+    tasks = []
+    for _, row in df.iterrows():
+        deadline = row["__deadline"]
+        tasks.append(
+            {
+                "Task": row.get("Task", "Task"),
+                "Scadenza": deadline.strftime("%d/%m") if pd.notna(deadline) else "Senza data",
+                "Assegnato a": row.get("Assegnato a", "—"),
+                "Stato": row.get("Stato", ""),
+                "Note": row.get("Note", ""),
+            }
+        )
+    return tasks
+
+
+def get_recent_expenses(expenses_df: pd.DataFrame, limit: int = 3):
+    """Ritorna le ultime spese registrate ordinate per data."""
+    if expenses_df is None or expenses_df.empty or "Importo in EUR" not in expenses_df.columns:
+        return []
+
+    df = expenses_df.copy()
+    df["__date"] = pd.to_datetime(df.get("Data"), errors="coerce")
+    df = df.sort_values(["__date"], ascending=[False], kind="mergesort").head(limit)
+
+    items = []
+    for _, row in df.iterrows():
+        items.append(
+            {
+                "Categoria": row.get("Categoria", "Spesa"),
+                "Descrizione": row.get("Descrizione", ""),
+                "Data": row["__date"].strftime("%d/%m") if pd.notna(row["__date"]) else "—",
+                "Importo": row.get("Importo in EUR"),
+                "Pagato da": row.get("Pagato da", "—"),
+            }
+        )
+    return items
+
+
 # ------------------------
 # SIDEBAR: IMPOSTAZIONI
 # ------------------------
-st.sidebar.header("Menù")
-
 page = st.sidebar.radio(
     "Sezioni",
-    ("Itinerario", "Mappa", "Info luoghi", "Info utili", "Packing list", "To-do pre-viaggio", "Spese & Budget", "Dashboard"),
+    (
+        "Home",
+        "Itinerario",
+        "Mappa",
+        "Info luoghi",
+        "Info utili",
+        "Packing list",
+        "To-do pre-viaggio",
+        "Spese & Budget",
+        "Dashboard",
+    ),
 )
 
 st.sidebar.header("⚙️ Impostazioni")
@@ -858,9 +969,114 @@ st.sidebar.markdown("---")
 
 
 # ------------------------
+# PAGINA: HOME MOBILE
+# ------------------------
+if page == "Home":
+    st.header("📱 Dashboard veloce")
+    st.caption("Panoramica pensata per la visualizzazione su smartphone.")
+
+    travellers = st.session_state.travellers
+    itinerary_df = st.session_state.itinerary.copy()
+    expenses_df = st.session_state.expenses.copy()
+    todo_df = st.session_state.todo.copy()
+
+    total_km, avg_km, hotel_changes, _ = compute_itinerary_stats(itinerary_df)
+
+    total_expenses = (
+        expenses_df["Importo in EUR"].fillna(0).sum()
+        if "Importo in EUR" in expenses_df.columns
+        else 0.0
+    )
+    open_tasks_df = (
+        todo_df[todo_df["Stato"].isin(["Da fare", "In corso"])]
+        if "Stato" in todo_df.columns and not todo_df.empty
+        else pd.DataFrame(columns=todo_df.columns)
+    )
+    open_tasks_count = len(open_tasks_df)
+
+    col_home1, col_home2, col_home3 = st.columns(3)
+    with col_home1:
+        st.metric("Giorni pianificati", len(itinerary_df) or 0)
+    with col_home2:
+        st.metric("Spese registrate", format_euro(total_expenses))
+    with col_home3:
+        st.metric("Task aperti", open_tasks_count)
+
+    st.divider()
+
+    next_leg = get_next_itinerary_entry(itinerary_df)
+    st.subheader("🎯 Prossima tappa")
+    if next_leg:
+        giorno_value = next_leg.get("giorno")
+        if pd.notna(giorno_value):
+            header = f"Giorno {int(giorno_value)} • {next_leg['data_label']}"
+        else:
+            header = next_leg["data_label"]
+
+        st.markdown(f"**{header}**")
+        st.write(next_leg.get("tappa", "—"))
+
+        info_col1, info_col2 = st.columns(2)
+        with info_col1:
+            st.caption(f"Tipo giorno: {next_leg.get('tipo', '—')}")
+            if next_leg.get("distanza_label"):
+                st.caption(f"Distanza prevista: {next_leg['distanza_label']}")
+        with info_col2:
+            pern = next_leg.get("pernottamento")
+            st.caption(f"Pernotto: {pern or '—'}")
+
+        if next_leg.get("note"):
+            st.write(next_leg["note"])
+    else:
+        st.info("Compila l'itinerario per vedere la prossima tappa.")
+
+    st.divider()
+
+    col_cards1, col_cards2 = st.columns(2)
+
+    with col_cards1:
+        st.subheader("✅ Task prioritari")
+        top_tasks = get_top_todo_items(todo_df)
+        if not top_tasks:
+            st.caption("Nessun task urgente. Buon lavoro!")
+        else:
+            for task in top_tasks:
+                st.markdown(
+                    f"**{task['Task']}** · {task['Scadenza']} ({task['Assegnato a']})"
+                )
+                if task["Note"]:
+                    st.caption(task["Note"])
+
+    with col_cards2:
+        st.subheader("💳 Spese recenti")
+        recent_expenses = get_recent_expenses(expenses_df)
+        if not recent_expenses:
+            st.caption("Aggiungi la prima spesa per popolare questo box.")
+        else:
+            for exp in recent_expenses:
+                st.markdown(
+                    f"**{format_euro(exp['Importo'])}** · {exp['Categoria']} • {exp['Data']}"
+                )
+                desc = exp.get("Descrizione") or "—"
+                st.caption(f"{desc} — pagato da {exp.get('Pagato da', '—')}")
+
+    st.divider()
+
+    st.subheader("📌 Statistiche lampo")
+    stat_col1, stat_col2, stat_col3 = st.columns(3)
+    with stat_col1:
+        st.metric("Km totali", format_km(total_km))
+    with stat_col2:
+        st.metric("Km medi/giorno", format_km(avg_km))
+    with stat_col3:
+        st.metric("Cambi hotel", hotel_changes if hotel_changes is not None else "—")
+
+    st.caption("Apri le sezioni dettagliate dal menu laterale per modificare i dati.")
+
+# ------------------------
 # PAGINA: ITINERARIO
 # ------------------------
-if page == "Itinerario":
+elif page == "Itinerario":
     st.header("📅 Itinerario")
 
     st.markdown("### Riepilogo giorno per giorno")
@@ -1140,7 +1356,7 @@ elif page == "Mappa":
                 route_paths.append(
                     {
                         "path": coords,
-                        "width": 5000,
+                        "width": 1500,
                     }
                 )
 
