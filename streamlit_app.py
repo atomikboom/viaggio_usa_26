@@ -7,6 +7,7 @@ import os
 import pydeck as pdk
 import math
 import requests
+import sqlalchemy
 
 
 MAPBOX_API_KEY = st.secrets.get("MAPBOX_API_KEY", os.getenv("MAPBOX_API_KEY"))
@@ -548,7 +549,7 @@ def initialize_database(db_path="travel_hub_usa_ovest.db"):
     # -----------------------------
     # 4) SALVATAGGIO SU SQLITE (MERGE INTELLIGENTE)
     # -----------------------------
-    conn = sqlite3.connect(db_path)
+    conn = get_conn()
 
     # ITINERARY: merge su "Giorno" o "Data"
     try:
@@ -1004,8 +1005,31 @@ TABLE_COLUMN_ALIASES = {
     },
 }
 
+
+@st.cache_resource
+def get_engine():
+    """
+    Restituisce un engine SQLAlchemy.
+    - Se esiste st.secrets["DB_URL"] -> usa Postgres Neon (cloud).
+    - Altrimenti fallback su SQLite locale (utile per test in locale).
+    """
+    db_url = st.secrets.get("DB_URL", None)
+    if db_url:
+        # Esempio: postgresql+psycopg2://user:pass@host:5432/dbname?sslmode=require
+        return sqlalchemy.create_engine(db_url, pool_pre_ping=True)
+    else:
+        # Fallback: file SQLite locale
+        return sqlalchemy.create_engine(f"sqlite:///{DB_PATH}")
+
 def get_conn():
-    return sqlite3.connect(DB_PATH)
+    """
+    Restituisce una connessione SQLAlchemy.
+    Compatibile con:
+    - pd.read_sql(..., conn)
+    - df.to_sql(..., conn, ...)
+    - conn.execute("...")
+    """
+    return get_engine().connect()
 
 def load_table(table_name, columns):
     """Carica una tabella dal DB in un DataFrame. Se non esiste, restituisce un DF vuoto."""
