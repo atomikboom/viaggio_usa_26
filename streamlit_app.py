@@ -9,6 +9,7 @@ import math
 import requests
 import sqlalchemy
 from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
 
 MAPBOX_API_KEY = st.secrets.get("MAPBOX_API_KEY", os.getenv("MAPBOX_API_KEY"))
 ICON_URLS_BY_TYPE = {
@@ -1050,52 +1051,63 @@ def save_table(df, table_name):
         df.to_sql(table_name, conn, if_exists="replace", index=False)
 
 def init_info_table():
-    """Crea la tabella info se non esiste."""
-    with get_conn() as conn:
-        conn.execute(
-            text(
-                """
-                CREATE TABLE IF NOT EXISTS info (
-                    key   TEXT PRIMARY KEY,
-                    value TEXT
+    """Crea la tabella info se non esiste (compatibile con SQLite e Postgres/Neon)."""
+    try:
+        with get_conn() as conn:
+            conn.execute(
+                text(
+                    """
+                    CREATE TABLE IF NOT EXISTS info (
+                        key   TEXT PRIMARY KEY,
+                        value TEXT
+                    )
+                    """
                 )
-                """
             )
-        )
-        # Nessun conn.commit(): il context manager gestisce la transazione
+            # In SQLAlchemy 2.x il context manager gestisce commit/rollback
+    except SQLAlchemyError as e:
+        # Se proprio il DB non è raggiungibile o la CREATE fallisce,
+        # non blocchiamo l'intera app: useremo solo i default in memoria.
+        # volendo: st.write("Errore init_info_table:", e)
+        pass
 
 
 def set_info(key, value):
     """Salva una coppia chiave/valore (stringa) nella tabella info."""
     init_info_table()
-    with get_conn() as conn:
-        conn.execute(
-            text(
-                """
-                INSERT INTO info (key, value)
-                VALUES (:key, :value)
-                ON CONFLICT (key) DO UPDATE
-                SET value = EXCLUDED.value
-                """
-            ),
-            {"key": key, "value": value},
-        )
-        # Anche qui niente conn.commit()
+    try:
+        with get_conn() as conn:
+            conn.execute(
+                text(
+                    """
+                    INSERT INTO info (key, value)
+                    VALUES (:key, :value)
+                    ON CONFLICT (key) DO UPDATE
+                    SET value = EXCLUDED.value
+                    """
+                ),
+                {"key": key, "value": value},
+            )
+    except SQLAlchemyError as e:
+        # Se fallisce il salvataggio, non mandiamo giù tutta l'app.
+        # Puoi eventualmente loggare l'errore.
+        # st.write("Errore set_info:", e)
+        pass
 
 
 def get_info(key, default=None):
-    """Recupera una stringa dalla tabella info; se non esiste, restituisce default."""
+    """
+    Recupera una stringa dalla tabella info; se non esiste o
+    c'è un errore di DB, restituisce default.
+    """
     init_info_table()
-    with get_conn() as conn:
-        result = conn.execute(
-            text("SELECT value FROM info WHERE key = :key"),
-            {"key": key},
-        )
-        row = result.fetchone()
-        if row is not None:
-            # row è un oggetto Row di SQLAlchemy: indicizzazione per posizione
-            return row[0]
-        return default
+    try:
+        with get_conn() as conn:
+            result = conn.execute(
+                text("SELECT value FROM info WHERE key = :key"),
+                {"key": key},
+            )
+            # scalar() restituisce diretta
 
 def load_travellers_from_db():
     """Carica i nomi dei viaggiatori da info come JSON."""
