@@ -1064,11 +1064,11 @@ def init_info_table():
                     """
                 )
             )
-            # In SQLAlchemy 2.x il context manager gestisce commit/rollback
+            # Il context manager gestisce commit/rollback in modo automatico
     except SQLAlchemyError as e:
-        # Se proprio il DB non è raggiungibile o la CREATE fallisce,
-        # non blocchiamo l'intera app: useremo solo i default in memoria.
-        # volendo: st.write("Errore init_info_table:", e)
+        # Se il DB non è raggiungibile o la CREATE fallisce, non blocchiamo l'app.
+        # Puoi loggare se vuoi:
+        # st.write("Errore init_info_table:", e)
         pass
 
 
@@ -1089,8 +1089,6 @@ def set_info(key, value):
                 {"key": key, "value": value},
             )
     except SQLAlchemyError as e:
-        # Se fallisce il salvataggio, non mandiamo giù tutta l'app.
-        # Puoi eventualmente loggare l'errore.
         # st.write("Errore set_info:", e)
         pass
 
@@ -1107,7 +1105,14 @@ def get_info(key, default=None):
                 text("SELECT value FROM info WHERE key = :key"),
                 {"key": key},
             )
-            # scalar() restituisce diretta
+            value = result.scalar()
+            if value is None:
+                return default
+            return value
+    except SQLAlchemyError as e:
+        # st.write("Errore get_info:", e)
+        return default
+
 
 def load_travellers_from_db():
     """Carica i nomi dei viaggiatori da info come JSON."""
@@ -1123,8 +1128,11 @@ def load_travellers_from_db():
         # fallback
         return ["Daniele", "Alessandra", "Andrea", "Paola"]
 
+
 def save_travellers_to_db(travellers_list):
+    """Salva la lista dei viaggiatori nella tabella info."""
     set_info("travellers", json.dumps(travellers_list))
+
 
 # ------------------------
 # INIZIALIZZAZIONE STATO
