@@ -8,7 +8,7 @@ import pydeck as pdk
 import math
 import requests
 import sqlalchemy
-
+from sqlalchemy import text
 
 MAPBOX_API_KEY = st.secrets.get("MAPBOX_API_KEY", os.getenv("MAPBOX_API_KEY"))
 ICON_URLS_BY_TYPE = {
@@ -1053,36 +1053,47 @@ def init_info_table():
     """Crea la tabella info se non esiste."""
     with get_conn() as conn:
         conn.execute(
-            """
-            CREATE TABLE IF NOT EXISTS info (
-                key TEXT PRIMARY KEY,
-                value TEXT
+            text(
+                """
+                CREATE TABLE IF NOT EXISTS info (
+                    key   TEXT PRIMARY KEY,
+                    value TEXT
+                )
+                """
             )
-            """
         )
-        conn.commit()
+        # Nessun conn.commit(): il context manager gestisce la transazione
+
 
 def set_info(key, value):
     """Salva una coppia chiave/valore (stringa) nella tabella info."""
     init_info_table()
     with get_conn() as conn:
         conn.execute(
-            """
-            INSERT INTO info(key, value)
-            VALUES (?, ?)
-            ON CONFLICT(key) DO UPDATE SET value=excluded.value
-            """,
-            (key, value),
+            text(
+                """
+                INSERT INTO info (key, value)
+                VALUES (:key, :value)
+                ON CONFLICT (key) DO UPDATE
+                SET value = EXCLUDED.value
+                """
+            ),
+            {"key": key, "value": value},
         )
-        conn.commit()
+        # Anche qui niente conn.commit()
+
 
 def get_info(key, default=None):
     """Recupera una stringa dalla tabella info; se non esiste, restituisce default."""
     init_info_table()
     with get_conn() as conn:
-        cur = conn.execute("SELECT value FROM info WHERE key = ?", (key,))
-        row = cur.fetchone()
-        if row:
+        result = conn.execute(
+            text("SELECT value FROM info WHERE key = :key"),
+            {"key": key},
+        )
+        row = result.fetchone()
+        if row is not None:
+            # row è un oggetto Row di SQLAlchemy: indicizzazione per posizione
             return row[0]
         return default
 
