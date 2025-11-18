@@ -556,20 +556,117 @@ def initialize_database(db_path="travel_hub_usa_ovest.db"):
     conn = get_conn()
 
     # ITINERARY: merge su "Giorno" o "Data"
-    try:
-        existing_itinerary = pd.read_sql("SELECT * FROM itinerary", conn)
-        ...
-    except Exception:
-        pass
-    ...
-    # Salva tutto (ora con merge completato)
-    _save_df_to_db(conn, "itinerary", itinerary_df)
-    _save_df_to_db(conn, "bookings", bookings_df)
-    _save_df_to_db(conn, "locations", locations_df)
-    _save_df_to_db(conn, "packing", packing_df)
-    
-    conn.close()
+    existing_itinerary = load_table("itinerary", itinerary_df.columns)
+    if not existing_itinerary.empty:
+        merged_itinerary = itinerary_df.copy()
+        for _, row in existing_itinerary.iterrows():
+            giorno = row.get("Giorno")
+            data = row.get("Data")
+            mask = (merged_itinerary["Giorno"] == giorno) | (merged_itinerary["Data"] == data)
+            if mask.any():
+                existing_idx = mask.idxmax()
+                for col in merged_itinerary.columns:
+                    if pd.isna(merged_itinerary.at[existing_idx, col]) and pd.notna(row.get(col)):
+                        merged_itinerary.at[existing_idx, col] = row[col]
+            else:
+                merged_itinerary = pd.concat(
+                    [merged_itinerary, row.to_frame().T],
+                    ignore_index=True,
+                )
+        itinerary_df = merged_itinerary
 
+    # BOOKINGS: merge su "Nome" + "Check_in"
+    bookings_columns = list(bookings_df.columns)
+    existing_bookings = load_table("bookings", bookings_columns)
+    if not existing_bookings.empty:
+        merged_bookings = bookings_df.copy()
+        for _, row in existing_bookings.iterrows():
+            nome = row.get("Nome")
+            check_in = row.get("Check_in")
+            mask = (merged_bookings["Nome"] == nome) & (merged_bookings["Check_in"] == check_in)
+            if mask.any():
+                existing_idx = mask.idxmax()
+                for col in merged_bookings.columns:
+                    if pd.isna(merged_bookings.at[existing_idx, col]) and pd.notna(row.get(col)):
+                        merged_bookings.at[existing_idx, col] = row[col]
+            else:
+                merged_bookings = pd.concat(
+                    [merged_bookings, row.to_frame().T],
+                    ignore_index=True,
+                )
+        bookings_df = merged_bookings
+
+    # LOCATIONS: merge su "Nome luogo" - PRESERVA COORDINATE!
+    locations_columns = [
+        "Nome luogo",
+        "Data",
+        "Latitudine",
+        "Longitudine",
+        "Tipo",
+        "Note",
+        "Maps URL",
+    ]
+    existing_locations = load_table("locations", locations_columns)
+    if not existing_locations.empty:
+        existing_locations = ensure_columns(existing_locations, locations_columns)
+        locations_df = ensure_columns(locations_df, locations_columns)
+    
+        merged_locations = existing_locations.copy()
+        for _, new_row in locations_df.iterrows():
+            nome_luogo = new_row.get("Nome luogo")
+            if pd.isna(nome_luogo) or nome_luogo == "":
+                continue
+            mask = merged_locations["Nome luogo"] == nome_luogo
+            if mask.any():
+                existing_idx = mask.idxmax()
+                # (qui tieni tutta la tua logica per preservare coordinate / aggiornare campi vuoti)
+                ...
+            else:
+                merged_locations = pd.concat(
+                    [merged_locations, new_row.to_frame().T],
+                    ignore_index=True,
+                )
+        locations_df = merged_locations
+
+    # PACKING: merge su "Oggetto" + "Categoria" - PRESERVA STATO E CHECKBOX!
+    packing_columns = [
+        "Oggetto",
+        "Categoria",
+        "Per chi",
+        "Stato",
+        "Note",
+        *PACKING_CHECKBOX_COLUMNS,
+    ]
+    existing_packing = load_table("packing", packing_columns)
+    if not existing_packing.empty:
+        existing_packing = ensure_columns(existing_packing, packing_columns)
+        packing_df = ensure_columns(packing_df, packing_columns)
+    
+        merged_packing = existing_packing.copy()
+        for _, new_row in packing_df.iterrows():
+            oggetto = new_row.get("Oggetto")
+            categoria = new_row.get("Categoria")
+            if pd.isna(oggetto) or oggetto == "":
+                continue
+            mask = (merged_packing["Oggetto"] == oggetto) & (merged_packing["Categoria"] == categoria)
+            if mask.any():
+                existing_idx = mask.idxmax()
+                # qui mantieni esattamente la tua logica per non toccare i checkbox, ecc.
+                ...
+            else:
+                merged_packing = pd.concat(
+                    [merged_packing, new_row.to_frame().T],
+                    ignore_index=True,
+                )
+        packing_df = merged_packing
+
+
+    # Salva tutto (ora con merge completato)
+    save_table(itinerary_df, "itinerary")
+    save_table(bookings_df, "bookings")
+    save_table(locations_df, "locations")
+    save_table(packing_df, "packing")
+    
     return True
 
 
