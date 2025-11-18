@@ -1045,10 +1045,57 @@ def load_table(table_name, columns):
         except Exception:
             return pd.DataFrame(columns=columns)
 
+def _save_df_to_db(conn, table_name, df):
+    """
+    Salva un DataFrame in una tabella del DB usando solo SQLAlchemy Core,
+    evitando pandas.to_sql (compatibile con Postgres/Neon e SQLite).
+    Tutte le colonne vengono create come TEXT; i valori vengono convertiti in stringa.
+    """
+    if df is None:
+        return
+
+    # Copia per sicurezza, così non modifichiamo il DF originale
+    df = df.copy()
+
+    # Anche se vuoto, usiamo comunque le colonne per definire la tabella
+    cols = list(df.columns)
+    if not cols:
+        # Nessuna colonna -> niente da salvare
+        return
+
+    # Droppa e ricrea la tabella
+    col_defs = ", ".join(f'"{c}" TEXT' for c in cols)
+    conn.execute(text(f"DROP TABLE IF EXISTS {table_name}"))
+    conn.execute(text(f"CREATE TABLE {table_name} ({col_defs})"))
+
+    if df.empty:
+        # Tabella vuota ma struttura pronta
+        return
+
+    # Costruisci la INSERT parametrizzata
+    col_list = ", ".join(f'"{c}"' for c in cols)
+    placeholders = ", ".join(f":c{i}" for i in range(len(cols)))
+    insert_sql = text(f"INSERT INTO {table_name} ({col_list}) VALUES ({placeholders})")
+
+    # Prepara i parametri per ogni riga
+    rows = []
+    for _, row in df.iterrows():
+        params = {}
+        for i, value in enumerate(row):
+            if pd.isna(value):
+                params[f"c{i}"] = None
+            else:
+                params[f"c{i}"] = str(value)
+        rows.append(params)
+
+    # Esegui in modalità "executemany"
+    conn.execute(insert_sql, rows)
+
+
 def save_table(df, table_name):
     """Salva un DataFrame nel DB (sostituendo la tabella)."""
     with get_conn() as conn:
-        df.to_sql(table_name, conn, if_exists="replace", index=False)
+        _save_df_to_db(conn, table_name, df)
 
 def init_info_table():
     """Crea la tabella info se non esiste (compatibile con SQLite e Postgres/Neon)."""
