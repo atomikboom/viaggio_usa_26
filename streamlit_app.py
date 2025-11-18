@@ -551,8 +551,6 @@ def initialize_database(db_path="travel_hub_usa_ovest.db"):
     # 4) SALVATAGGIO SU SQLITE (MERGE INTELLIGENTE)
     # -----------------------------
 
-    conn = get_conn()
-
     # ITINERARY: merge su "Giorno" o "Data"
     itinerary_columns = list(itinerary_df.columns)
     existing_itinerary = load_table("itinerary", itinerary_columns)
