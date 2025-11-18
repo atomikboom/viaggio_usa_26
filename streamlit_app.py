@@ -1063,13 +1063,15 @@ def _save_df_to_db(conn, table_name, df):
 
 def save_table(df, table_name):
     """Salva un DataFrame nel DB (sostituendo la tabella)."""
-    with get_conn() as conn:
+    engine = get_engine()
+    with engine.begin() as conn:
         _save_df_to_db(conn, table_name, df)
 
 def init_info_table():
     """Crea la tabella info se non esiste (compatibile con SQLite e Postgres/Neon)."""
     try:
-        with get_conn() as conn:
+        engine = get_engine()
+        with engine.begin() as conn:
             conn.execute(
                 text(
                     """
@@ -1092,7 +1094,8 @@ def set_info(key, value):
     """Salva una coppia chiave/valore (stringa) nella tabella info."""
     init_info_table()
     try:
-        with get_conn() as conn:
+        engine = get_engine()
+        with engine.begin() as conn:
             conn.execute(
                 text(
                     """
