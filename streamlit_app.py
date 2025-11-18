@@ -550,152 +550,18 @@ def initialize_database(db_path="travel_hub_usa_ovest.db"):
     # -----------------------------
     # 4) SALVATAGGIO SU SQLITE (MERGE INTELLIGENTE)
     # -----------------------------
+        # -----------------------------
+    # 4) SALVATAGGIO SU SQLITE (MERGE INTELLIGENTE)
+    # -----------------------------
     conn = get_conn()
 
     # ITINERARY: merge su "Giorno" o "Data"
     try:
         existing_itinerary = pd.read_sql("SELECT * FROM itinerary", conn)
-        if not existing_itinerary.empty:
-            # Merge: preserva dati esistenti, aggiorna solo se mancanti
-            merged_itinerary = itinerary_df.copy()
-            for idx, row in existing_itinerary.iterrows():
-                giorno = row.get("Giorno")
-                data = row.get("Data")
-                # Cerca match per Giorno o Data
-                mask = (merged_itinerary["Giorno"] == giorno) | (merged_itinerary["Data"] == data)
-                if mask.any():
-                    # Aggiorna solo campi vuoti/None nel nuovo con valori esistenti
-                    existing_idx = mask.idxmax()
-                    for col in merged_itinerary.columns:
-                        if pd.isna(merged_itinerary.at[existing_idx, col]) and pd.notna(row.get(col)):
-                            merged_itinerary.at[existing_idx, col] = row[col]
-                else:
-                    # Aggiungi riga esistente che non è nel nuovo
-                    merged_itinerary = pd.concat([merged_itinerary, row.to_frame().T], ignore_index=True)
-            itinerary_df = merged_itinerary
-    except Exception:
-        pass  # Tabella non esiste ancora, usa i dati di default
-
-    # BOOKINGS: merge su "Nome" + "Check_in"
-    try:
-        existing_bookings = pd.read_sql("SELECT * FROM bookings", conn)
-        if not existing_bookings.empty:
-            merged_bookings = bookings_df.copy()
-            for idx, row in existing_bookings.iterrows():
-                nome = row.get("Nome")
-                check_in = row.get("Check_in")
-                mask = (merged_bookings["Nome"] == nome) & (merged_bookings["Check_in"] == check_in)
-                if mask.any():
-                    existing_idx = mask.idxmax()
-                    for col in merged_bookings.columns:
-                        if pd.isna(merged_bookings.at[existing_idx, col]) and pd.notna(row.get(col)):
-                            merged_bookings.at[existing_idx, col] = row[col]
-                else:
-                    merged_bookings = pd.concat([merged_bookings, row.to_frame().T], ignore_index=True)
-            bookings_df = merged_bookings
+        ...
     except Exception:
         pass
-
-    # LOCATIONS: merge su "Nome luogo" - PRESERVA COORDINATE!
-    try:
-        existing_locations = pd.read_sql("SELECT * FROM locations", conn)
-        if not existing_locations.empty:
-            # Allinea colonne: assicurati che entrambi i DataFrame abbiano le stesse colonne
-            locations_columns = [
-                "Nome luogo",
-                "Data",
-                "Latitudine",
-                "Longitudine",
-                "Tipo",
-                "Note",
-                "Maps URL",
-            ]
-            existing_locations = ensure_columns(existing_locations, locations_columns)
-            locations_df = ensure_columns(locations_df, locations_columns)
-            
-            # Partiamo dai dati esistenti e aggiorniamo solo dove mancano
-            merged_locations = existing_locations.copy()
-            # Per ogni location nel nuovo dataset
-            for idx, new_row in locations_df.iterrows():
-                nome_luogo = new_row.get("Nome luogo")
-                if pd.isna(nome_luogo) or nome_luogo == "":
-                    continue
-                # Cerca se esiste già
-                mask = merged_locations["Nome luogo"] == nome_luogo
-                if mask.any():
-                    # Esiste già: preserva coordinate e altri dati esistenti, aggiorna solo Maps URL se mancante
-                    existing_idx = mask.idxmax()
-                    # IMPORTANTE: preserva SEMPRE coordinate esistenti (non sovrascrivere!)
-                    # Aggiorna Maps URL solo se mancante nell'esistente
-                    if (pd.isna(merged_locations.at[existing_idx, "Maps URL"]) or 
-                        str(merged_locations.at[existing_idx, "Maps URL"]).strip() == ""):
-                        if pd.notna(new_row.get("Maps URL")) and str(new_row["Maps URL"]).strip() != "":
-                            merged_locations.at[existing_idx, "Maps URL"] = new_row["Maps URL"]
-                    # Aggiorna Tipo solo se mancante
-                    if pd.isna(merged_locations.at[existing_idx, "Tipo"]) or str(merged_locations.at[existing_idx, "Tipo"]).strip() == "":
-                        if pd.notna(new_row.get("Tipo")) and str(new_row["Tipo"]).strip() != "":
-                            merged_locations.at[existing_idx, "Tipo"] = new_row["Tipo"]
-                    # Aggiorna Note solo se mancante
-                    if pd.isna(merged_locations.at[existing_idx, "Note"]) or str(merged_locations.at[existing_idx, "Note"]).strip() == "":
-                        if pd.notna(new_row.get("Note")) and str(new_row["Note"]).strip() != "":
-                            merged_locations.at[existing_idx, "Note"] = new_row["Note"]
-                    # Data: preserva esistente, aggiorna solo se mancante
-                    if pd.isna(merged_locations.at[existing_idx, "Data"]):
-                        if pd.notna(new_row.get("Data")):
-                            merged_locations.at[existing_idx, "Data"] = new_row["Data"]
-                else:
-                    # Nuova location: aggiungila
-                    merged_locations = pd.concat([merged_locations, new_row.to_frame().T], ignore_index=True)
-            locations_df = merged_locations
-    except Exception:
-        pass
-
-    # PACKING: merge su "Oggetto" + "Categoria" - PRESERVA STATO E CHECKBOX!
-    try:
-        existing_packing = pd.read_sql("SELECT * FROM packing", conn)
-        if not existing_packing.empty:
-            # Allinea colonne: assicurati che entrambi i DataFrame abbiano le stesse colonne
-            packing_columns = [
-                "Oggetto",
-                "Categoria",
-                "Per chi",
-                "Stato",
-                "Note",
-                *PACKING_CHECKBOX_COLUMNS,
-            ]
-            existing_packing = ensure_columns(existing_packing, packing_columns)
-            packing_df = ensure_columns(packing_df, packing_columns)
-            
-            # Partiamo dai dati esistenti e aggiorniamo solo dove mancano
-            merged_packing = existing_packing.copy()
-            # Per ogni oggetto nel nuovo dataset
-            for idx, new_row in packing_df.iterrows():
-                oggetto = new_row.get("Oggetto")
-                categoria = new_row.get("Categoria")
-                if pd.isna(oggetto) or oggetto == "":
-                    continue
-                # Cerca se esiste già
-                mask = (merged_packing["Oggetto"] == oggetto) & (merged_packing["Categoria"] == categoria)
-                if mask.any():
-                    # Esiste già: preserva tutti i dati esistenti (stato, checkbox, note)
-                    existing_idx = mask.idxmax()
-                    # Aggiorna solo campi vuoti con i nuovi valori
-                    for col in packing_columns:
-                        if col in ["Stato", "Per chi", "Note"]:
-                            # Per questi campi, aggiorna solo se mancante
-                            if pd.isna(merged_packing.at[existing_idx, col]) or str(merged_packing.at[existing_idx, col]).strip() == "":
-                                if pd.notna(new_row.get(col)) and str(new_row[col]).strip() != "":
-                                    merged_packing.at[existing_idx, col] = new_row[col]
-                        elif col in PACKING_CHECKBOX_COLUMNS:
-                            # Per i checkbox, preserva sempre il valore esistente (non sovrascrivere!)
-                            pass  # Mantieni il valore esistente
-                else:
-                    # Nuovo oggetto: aggiungilo
-                    merged_packing = pd.concat([merged_packing, new_row.to_frame().T], ignore_index=True)
-            packing_df = merged_packing
-    except Exception:
-        pass
-
+    ...
     # Salva tutto (ora con merge completato)
     _save_df_to_db(conn, "itinerary", itinerary_df)
     _save_df_to_db(conn, "bookings", bookings_df)
@@ -705,6 +571,7 @@ def initialize_database(db_path="travel_hub_usa_ovest.db"):
     conn.close()
 
     return True
+
 
 
 def haversine_km(lat1, lon1, lat2, lon2):
