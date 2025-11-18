@@ -697,11 +697,11 @@ def initialize_database(db_path="travel_hub_usa_ovest.db"):
         pass
 
     # Salva tutto (ora con merge completato)
-    itinerary_df.to_sql("itinerary", conn, if_exists="replace", index=False)
-    bookings_df.to_sql("bookings", conn, if_exists="replace", index=False)
-    locations_df.to_sql("locations", conn, if_exists="replace", index=False)
-    packing_df.to_sql("packing", conn, if_exists="replace", index=False)
-
+    _save_df_to_db(conn, "itinerary", itinerary_df)
+    _save_df_to_db(conn, "bookings", bookings_df)
+    _save_df_to_db(conn, "locations", locations_df)
+    _save_df_to_db(conn, "packing", packing_df)
+    
     conn.close()
 
     return True
