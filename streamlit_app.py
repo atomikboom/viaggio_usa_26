@@ -554,6 +554,8 @@ def initialize_database(db_path="travel_hub_usa_ovest.db"):
     # ITINERARY: merge su "Giorno" o "Data"
     itinerary_columns = list(itinerary_df.columns)
     existing_itinerary = load_table("itinerary", itinerary_columns)
+    
+    # ✅ INVERTI LA LOGICA: se la tabella ESISTE, fai il merge
     if not existing_itinerary.empty:
         merged_itinerary = itinerary_df.copy()
         for _, row in existing_itinerary.iterrows():
@@ -571,10 +573,12 @@ def initialize_database(db_path="travel_hub_usa_ovest.db"):
                     ignore_index=True,
                 )
         itinerary_df = merged_itinerary
+    # ✅ Se existing_itinerary.empty == True, itinerary_df rimane con i dati iniziali
 
-    # BOOKINGS: merge su "Nome" + "Check_in"
+    # BOOKINGS: stessa logica
     bookings_columns = list(bookings_df.columns)
     existing_bookings = load_table("bookings", bookings_columns)
+    
     if not existing_bookings.empty:
         merged_bookings = bookings_df.copy()
         for _, row in existing_bookings.iterrows():
@@ -593,11 +597,12 @@ def initialize_database(db_path="travel_hub_usa_ovest.db"):
                 )
         bookings_df = merged_bookings
 
-    # LOCATIONS: merge su "Nome luogo" - PRESERVA COORDINATE!
+    # LOCATIONS: stessa logica
     locations_columns = [
         "Nome luogo", "Data", "Latitudine", "Longitudine", "Tipo", "Note", "Maps URL"
     ]
     existing_locations = load_table("locations", locations_columns)
+    
     if not existing_locations.empty:
         existing_locations = ensure_columns(existing_locations, locations_columns)
         locations_df = ensure_columns(locations_df, locations_columns)
@@ -610,7 +615,7 @@ def initialize_database(db_path="travel_hub_usa_ovest.db"):
             mask = merged_locations["Nome luogo"] == nome_luogo
             if mask.any():
                 existing_idx = mask.idxmax()
-                # PRESERVA coordinate esistenti, aggiorna solo Maps URL/Tipo/Note se mancanti
+                # PRESERVA coordinate esistenti
                 if pd.isna(merged_locations.at[existing_idx, "Maps URL"]) or str(merged_locations.at[existing_idx, "Maps URL"]).strip() == "":
                     if pd.notna(new_row.get("Maps URL")) and str(new_row["Maps URL"]).strip() != "":
                         merged_locations.at[existing_idx, "Maps URL"] = new_row["Maps URL"]
@@ -630,11 +635,12 @@ def initialize_database(db_path="travel_hub_usa_ovest.db"):
                 )
         locations_df = merged_locations
 
-    # PACKING: merge su "Oggetto" + "Categoria" - PRESERVA STATO E CHECKBOX!
+    # PACKING: stessa logica
     packing_columns = [
         "Oggetto", "Categoria", "Per chi", "Stato", "Note", *PACKING_CHECKBOX_COLUMNS
     ]
     existing_packing = load_table("packing", packing_columns)
+    
     if not existing_packing.empty:
         existing_packing = ensure_columns(existing_packing, packing_columns)
         packing_df = ensure_columns(packing_df, packing_columns)
@@ -653,7 +659,6 @@ def initialize_database(db_path="travel_hub_usa_ovest.db"):
                     if pd.isna(merged_packing.at[existing_idx, col]) or str(merged_packing.at[existing_idx, col]).strip() == "":
                         if pd.notna(new_row.get(col)) and str(new_row[col]).strip() != "":
                             merged_packing.at[existing_idx, col] = new_row[col]
-                # I checkbox e lo stato NON vengono mai sovrascritti
             else:
                 merged_packing = pd.concat(
                     [merged_packing, new_row.to_frame().T],
